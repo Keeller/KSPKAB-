@@ -35,13 +35,11 @@ public class HttpServer implements Server,Runnable {
             try {
 
                 if (ext.equals("jar")) {
-                    List<String> hs=this.parseGetParam();
-                    String params="";
-                    for (String s:hs) {
-                        params+=s+=" ";
-                    }
+                    HashMap<String,String> hs=this.parseGetParam();
+                    HashMap<String,HashMap<String,String>> Request=new HashMap<>();
+                    Request.put(this.method,hs);
 
-                    return this.runScript(webDir + "\\" + fname, params);
+                    return this.runScript(webDir + "\\" + fname, Request);
                 }
                 else {
                     Path f = Paths.get(webDir + "\\"+fname);
@@ -63,14 +61,16 @@ public class HttpServer implements Server,Runnable {
 
     }
 
-    private byte[] runScript(String pathToExecute,String params){
+    private byte[] runScript(String pathToExecute,HashMap<String,HashMap<String,String>> request){
         Runtime runtime=Runtime.getRuntime();
         try {
 
 
-            Process process=runtime.exec("java -jar "+pathToExecute+" "+params);
+            Process process=runtime.exec("java -jar "+pathToExecute);
             BufferedReader br=new BufferedReader(new InputStreamReader(process.getInputStream()));
-
+            ObjectOutputStream oos=new ObjectOutputStream(process.getOutputStream());
+            oos.writeObject(request);
+            oos.flush();
             String s="";
             while (process.isAlive());
             while (br.ready())
@@ -94,8 +94,8 @@ public class HttpServer implements Server,Runnable {
             byte[] wr=null;
 
                 String[] parasm = reqArr.get(0).split("/");
-                this.method=parasm[0];
-                if(!this.method.trim().equalsIgnoreCase("GET"))
+                this.method=parasm[0].trim();
+                if(!this.method.equalsIgnoreCase("GET"))
                     return;
                 String[] rm=parasm[1].split(" ");
                 wr=this.getFile(rm[0]);
@@ -115,9 +115,9 @@ public class HttpServer implements Server,Runnable {
 
     }
 
-    private List<String> parseGetParam() throws Throwable {
+    private HashMap<String,String> parseGetParam() throws Throwable {
 
-             List<String> hs=new ArrayList<>();
+             HashMap<String,String> hs=new HashMap<>();
 
                 String[] parasm= reqArr.get(0).split("/");
                 String[] rm=parasm[1].split(" ");
@@ -125,7 +125,7 @@ public class HttpServer implements Server,Runnable {
                 String[] param=qarr[1].split("&");
                 for (String st:param) {
                     String[] kv=st.split("=");
-                    hs.add(kv[1]);
+                    hs.put(kv[0],kv[1]);
 
                 }
 
