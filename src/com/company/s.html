@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        function call() {
+
+            var msg = $('#formx').serialize();
+            $.ajax({
+                type: 'POST',
+                url: 'pseq.jar',
+                data: msg,
+                success: function (data) {
+                    alert(data);
+                },
+                error: function (xhr, str) {
+                    alert('Возникла ошибка: ' + xhr.responseCode);
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+<form action="javascript:void(null);" method="post" id="formx" onsubmit="call()">
+    Sequence<br>
+    <input type="text" name="seq" /><br>
+    Delimeter<br>
+    <input type="text" name="d" /><br>
+    <input type="submit" name="b" value="Post" /><br>
+</form>
+</body>
+</html>

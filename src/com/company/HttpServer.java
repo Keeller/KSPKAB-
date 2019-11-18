@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class HttpServer implements Server,Runnable {
 
@@ -17,7 +18,7 @@ public class HttpServer implements Server,Runnable {
     protected InputStream is;
     protected List<String> reqArr=new ArrayList<>();
     protected String method;
-    protected String webDir="C:\\Users\\kolya\\IdeaProjects\\KSPLab2\\src\\com\\company";
+    protected String webDir="C:\\Users\\kolya\\KSPKAB-\\src\\com\\company";
 
     public HttpServer(Socket client) throws Throwable{
         this.clientDialog=client;
@@ -35,15 +36,27 @@ public class HttpServer implements Server,Runnable {
             try {
 
                 if (ext.equals("jar")) {
-                    HashMap<String,String> hs=this.parseGetParam();
-                    HashMap<String,HashMap<String,String>> Request=new HashMap<>();
-                    Request.put(this.method,hs);
+                    HashMap<String,String> hs;
+                    HashMap<String, HashMap<String, String>> Request=null;
+                    if(this.method.equalsIgnoreCase("GET")) {
+                        hs = this.parseGetParam();
+                        Request = new HashMap<>();
+                        Request.put(this.method, hs);
+                    }
+                    else if(this.method.equalsIgnoreCase("POST")){
+                        hs = this.parsePostParam();
+                        Request = new HashMap<>();
+                        Request.put(this.method, hs);
+                    }
 
                     return this.runScript(webDir + "\\" + fname, Request);
                 }
                 else {
                     Path f = Paths.get(webDir + "\\"+fname);
-                    return Files.readAllBytes(f);
+                    if(Files.exists(f))
+                        return Files.readAllBytes(f);
+                    else
+                        return Files.readAllBytes(Paths.get(webDir+"\\index.html"));
                 }
             }
             catch (IOException ex){
@@ -95,8 +108,8 @@ public class HttpServer implements Server,Runnable {
 
                 String[] parasm = reqArr.get(0).split("/");
                 this.method=parasm[0].trim();
-                if(!this.method.equalsIgnoreCase("GET"))
-                    return;
+               // if(!this.method.equalsIgnoreCase("GET"))
+                  //  return;
                 String[] rm=parasm[1].split(" ");
                 wr=this.getFile(rm[0]);
                 this.writeResponse(wr);
@@ -133,17 +146,33 @@ public class HttpServer implements Server,Runnable {
 
     }
 
-    private void readData() throws Throwable {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        List<String> res=new ArrayList<>();
-        while(true) {
-             String s= br.readLine();
-            if(!br.ready()) {
-                break;
-            }
-            res.add(s);
+    private HashMap<String,String> parsePostParam(){
+        HashMap<String,String> hs=new HashMap<>();
+        String[] param=reqArr.get(reqArr.size()-1).split("&");
+        for (String st:param) {
+            String[] kv=st.split("=");
+            hs.put(kv[0],kv[1]);
+
         }
+
+        return hs;
+    }
+
+    private void readData() throws Throwable {
+        //InputStreamReader ins=new InputStreamReader(is);
+
+
+            //FuckJavadevelopers br = new FuckJavadevelopers(ins);
+
+
+        List<String> res=new ArrayList<>();
+        byte[] bytes=new byte[26000];
+        is.read(bytes);
+        String s=new String(bytes,StandardCharsets.UTF_8);
+        res=Arrays.asList(s.split("\n"));
+        System.out.println(s);
         this.reqArr=res;
+
         return;
     }
 
@@ -165,7 +194,7 @@ public class HttpServer implements Server,Runnable {
             result[i+response.getBytes().length]=s[i];
         }*/
 
-        Writer ow=new OutputStreamWriter(os,"windows-1251");
+        Writer ow=new OutputStreamWriter(os,"UTF-8");
         ow.write(response);
         ow.flush();
     }
